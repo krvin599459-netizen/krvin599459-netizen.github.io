@@ -1,0 +1,2495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生活比价助手 - 简单比价，聪明消费</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 基础样式 - 无印良品风格 */
+        :root {
+            --primary-color: #8c8c8c;
+            --secondary-color: #f5f5f5;
+            --accent-color: #a6a6a6;
+            --text-color: #333;
+            --light-text: #666;
+            --border-color: #e0e0e0;
+            --highlight-color: #882e3c;
+            --activity-green: #4ade80;
+            --activity-blue: #60a5fa;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+            --activity-purple: #a78bfa;
+            --activity-gray: #94a3b8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Helvetica Neue", Arial, "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        }
+        
+        body {
+            background-color: #fafafa;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        /* 字体层级优化 */
+        h1, h2, h3 {
+            font-weight: 600;
+        }
+        
+        h1 {
+            font-size: 36px;
+        }
+        
+        h2 {
+            font-size: 24px;
+        }
+        
+        h3 {
+            font-size: 18px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 头部样式 */
+        header {
+            background-color: white;
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--text-color);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: var(--light-text);
+            font-size: 15px;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--text-color);
+        }
+        
+        .user-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+            border-radius: 4px;
+        }
+        
+        .btn:hover {
+            background: var(--secondary-color);
+        }
+        
+        .btn-primary {
+            background: var(--highlight-color);
+            color: white;
+            border-color: var(--highlight-color);
+        }
+        
+        .btn-primary:hover {
+            background: #722430;
+            border-color: #722430;
+        }
+        
+        /* 模态框样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: var(--transition);
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--light-text);
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-modal:hover {
+            color: var(--text-color);
+        }
+        
+        /* 页面容器 */
+        .page-container {
+            position: relative;
+            min-height: 100vh;
+        }
+        
+        /* 主内容区域 */
+        .main-content {
+            padding-bottom: 80px;
+        }
+        
+        /* 二级页面样式 */
+        .secondary-page {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 900;
+            overflow-y: auto;
+            padding-top: 80px;
+        }
+        
+        .secondary-page.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+        
+        /* 返回按钮 */
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 950;
+            display: none;
+            background: white;
+            border: 1px solid var(--border-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .back-button.active {
+            display: flex;
+        }
+        
+        .back-button:hover {
+            background: var(--secondary-color);
+            transform: scale(1.05);
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+        
+        .loading::after {
+            content: '';
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--highlight-color);
+            border-radius: 50%;
+            animation: spin 1s ease infinite;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        /* 搜索区域 */
+        .search-section {
+            padding: 60px 0 40px;
+            text-align: center;
+        }
+        
+        .search-section h1 {
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--highlight-color);
+            letter-spacing: 1px;
+        }
+        
+        .search-section p {
+            color: var(--light-text);
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .search-box {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-right: none;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        .search-box button {
+            padding: 0 25px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .search-box button:hover {
+            background: var(--accent-color);
+        }
+        
+        /* 平台选择 */
+        .platforms {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .platform {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            border: 1px solid var(--border-color);
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .platform:hover {
+            background: var(--secondary-color);
+        }
+        
+        .platform.active {
+            border-color: var(--primary-color);
+            background: var(--secondary-color);
+        }
+        
+        /* 比价结果 */
+        .results-section {
+            padding: 40px 0;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+        
+        .section-title.highlight {
+            color: var(--highlight-color);
+            font-weight: 600;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        
+        .result-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .platform-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .platform-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .price {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--highlight-color);
+        }
+        
+        .original-price {
+            text-decoration: line-through;
+            color: var(--light-text);
+            font-size: 14px;
+            margin-left: 8px;
+        }
+        
+        .discount {
+            color: var(--highlight-color);
+            font-size: 14px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .details {
+            font-size: 14px;
+            color: var(--light-text);
+            margin-bottom: 15px;
+        }
+        
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            text-align: center;
+            background: white;
+            color: var(--highlight-color);
+            text-decoration: none;
+            border: 1px solid var(--highlight-color);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .action-btn:hover {
+            background: var(--highlight-color);
+            color: white;
+        }
+        
+        /* AI分析样式 */
+        .ai-analysis {
+            background: #f9f9f9;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+            position: relative;
+        }
+        
+        .ai-analysis::before {
+            content: "🤖 AI分析推荐";
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: white;
+            padding: 0 10px;
+            font-weight: 600;
+            color: var(--highlight-color);
+            font-size: 14px;
+        }
+        
+        .price-breakdown {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .price-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .price-item:last-child {
+            margin-bottom: 0;
+            font-weight: 600;
+            color: var(--highlight-color);
+            padding-top: 8px;
+            border-top: 1px dashed var(--border-color);
+        }
+        
+        .price-item .free {
+            text-decoration: line-through;
+            color: var(--light-text);
+        }
+        
+        .delivery-time-analysis {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .delivery-time-header {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+        
+        .time-slot {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .time-slot:last-child {
+            margin-bottom: 0;
+        }
+        
+        .time-slot .busy {
+            color: var(--highlight-color);
+            font-weight: 500;
+        }
+        
+        .ai-summary {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-color);
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .ai-summary::before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        
+        .best-choice-tag {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--highlight-color);
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .store-info {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border-color);
+        }
+        
+        .store-name {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+        
+        .store-rating {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            color: #ff9500;
+        }
+        
+        .rating-score {
+            color: var(--text-color);
+            font-weight: 500;
+        }
+        
+        /* 热门排行榜 */
+        .trending-section {
+            padding: 40px 0;
+            background: white;
+        }
+        
+        .trending-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .trending-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            background: white;
+            transition: all 0.3s;
+        }
+        
+        .trending-item:hover {
+            background: var(--secondary-color);
+        }
+        
+        .rank {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--highlight-color);
+            color: white;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .trending-info {
+            flex: 1;
+        }
+        
+        .trending-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .trending-diff {
+            font-size: 14px;
+            color: var(--light-text);
+        }
+        
+        .trending-diff span {
+            color: var(--highlight-color);
+            font-weight: 500;
+        }
+        
+        .action-btn.small {
+            width: auto;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        
+        /* 价格趋势 */
+        .price-trend-section {
+            padding: 40px 0;
+            background: var(--secondary-color);
+        }
+        
+        .trend-container {
+            background: white;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .trend-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .trend-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        #priceChart {
+            max-width: 100%;
+            height: auto;
+        }
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            font-size: 12px;
+            color: var(--light-text);
+        }
+        
+        .trend-summary {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            font-size: 14px;
+            color: var(--light-text);
+        }
+        
+        .trend-summary strong {
+            color: var(--highlight-color);
+        }
+        
+        /* 优惠券 */
+        .coupons-section {
+            padding: 40px 0;
+            background: white;
+        }
+        
+        .coupons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .coupon-card {
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            background: white;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .coupon-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .coupon-platform {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .coupon-value {
+            font-size: 24px;
+            color: var(--highlight-color);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .coupon-expiry {
+            font-size: 14px;
+            color: var(--light-text);
+            margin-bottom: 15px;
+        }
+        
+        /* 省钱攻略 */
+        .tips-section {
+            padding: 40px 0;
+            background: var(--secondary-color);
+        }
+        
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .tip-card {
+            background: white;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .tip-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .tip-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+        
+        .tip-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .tip-content {
+            font-size: 14px;
+            color: var(--light-text);
+            line-height: 1.6;
+        }
+        
+        /* 评价区域 */
+        .reviews-section {
+            padding: 40px 0;
+            background: white;
+        }
+        
+        .review-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        
+        .review-card:hover {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .reviewer-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .reviewer {
+            font-weight: 600;
+        }
+        
+        .user-badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: normal;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            background-color: rgba(0,0,0,0.02);
+        }
+        
+        .user-badge.active-user {
+            border-color: var(--activity-green);
+            color: var(--activity-green);
+        }
+        
+        .user-badge.senior-user {
+            border-color: var(--activity-blue);
+            color: var(--activity-blue);
+        }
+        
+        .user-badge.core-user {
+            border-color: var(--activity-purple);
+            color: var(--activity-purple);
+            font-weight: 500;
+        }
+        
+        .user-badge.new-user {
+            border-color: var(--activity-gray);
+            color: var(--activity-gray);
+        }
+        
+        .review-date {
+            color: var(--light-text);
+            font-size: 14px;
+        }
+        
+        .review-rating {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 10px;
+            color: #ff9500;
+        }
+        
+        .review-content {
+            color: var(--text-color);
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .weight-indicator {
+            font-size: 12px;
+            color: var(--light-text);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .weight-indicator .weight {
+            color: var(--highlight-color);
+            font-weight: 500;
+        }
+        
+        /* 标准按钮样式 */
+        .btn-outline {
+            background: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .btn-outline:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+        }
+        
+        /* VIP专属评价锁 */
+        .review-lock {
+            background: var(--secondary-color);
+            border: 2px dashed var(--border-color);
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .lock-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.6;
+        }
+        
+        .lock-message {
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+        
+        .weighted-score {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+        
+        .weighted-score .score {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--highlight-color);
+        }
+        
+        /* 页脚 */
+        footer {
+            background: white;
+            border-top: 1px solid var(--border-color);
+            padding: 40px 0;
+            margin-top: 60px;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        
+        .footer-section {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .footer-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 8px;
+        }
+        
+        .footer-links a {
+            text-decoration: none;
+            color: var(--light-text);
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--text-color);
+        }
+        
+        .copyright {
+            text-align: center;
+            margin-top: 40px;
+            color: var(--light-text);
+            font-size: 14px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-links {
+                gap: 15px;
+            }
+            
+            .search-section h1 {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部 -->
+    <div class="page-container">
+        <button class="back-button" id="backButton">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 6L9 12L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        <div class="main-content">
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">生活比价助手</div>
+                <nav class="nav-links">
+                    <a href="#">首页</a>
+                    <a href="#">外卖比价</a>
+                    <a href="#">购物比价</a>
+                    <a href="#">评价</a>
+                    <a href="#">关于我们</a>
+                </nav>
+                <div class="user-actions">
+                    <button class="btn">登录</button>
+                    <button class="btn">注册</button>
+                    <button class="btn-vip outlined" id="vip-button">VIP会员</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 搜索区域 -->
+    <section class="search-section">
+        <div class="container">
+            <h1>简单比价，聪明消费</h1>
+            <p>输入您想购买的商品或外卖，我们将为您比较多个平台的价格和优惠，帮您找到最划算的选择</p>
+            
+            <div class="search-box">
+                <input type="text" placeholder="例如：宫保鸡丁、iPhone 15、牛奶..." id="search-input">
+                <button id="search-btn">搜索</button>
+            </div>
+            
+            <div class="platforms">
+                <div class="platform active">
+                    <span>美团</span>
+                </div>
+                <div class="platform">
+                    <span>饿了么</span>
+                </div>
+                <div class="platform">
+                    <span>淘宝</span>
+                </div>
+                <div class="platform">
+                    <span>京东</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 比价结果 -->
+    <section class="results-section">
+        <div class="container">
+            <h2 class="section-title">比价结果：宫保鸡丁</h2>
+            
+            <!-- AI分析区域 -->
+            <div class="ai-analysis">
+                <div class="price-breakdown">
+                    <div class="price-item">
+                        <span>商品原价</span>
+                        <span>¥32.9</span>
+                    </div>
+                    <div class="price-item">
+                        <span>优惠券减免</span>
+                        <span>-¥6.0</span>
+                    </div>
+                    <div class="price-item">
+                        <span>配送费</span>
+                        <span class="free">¥3.0</span>
+                    </div>
+                    <div class="price-item">
+                        <span>预计实付</span>
+                        <span>¥26.9</span>
+                    </div>
+                </div>
+                
+                <div class="delivery-time-analysis">
+                    <div class="delivery-time-header">预计配送时间分析</div>
+                    <div class="time-slot">
+                        <span>当前下单 (11:30-12:00)</span>
+                        <span class="busy">30-35分钟</span>
+                    </div>
+                    <div class="time-slot">
+                        <span>12:30后下单</span>
+                        <span>20-25分钟</span>
+                    </div>
+                    <div class="time-slot">
+                        <span>14:00后下单</span>
+                        <span>15-20分钟</span>
+                    </div>
+                </div>
+                
+                <div class="ai-summary">
+                    <p>根据当前11:30的高峰期分析，建议：</p>
+                    <p>1. 饿了么平台价格最优，且有免配送费活动</p>
+                    <p>2. 当前为用餐高峰期，配送可能延迟5-10分钟</p>
+                    <p>3. 如非急需，建议14:00后下单，可节省约10分钟配送时间</p>
+                    <p>4. 综合考虑价格和时间，饿了么当前性价比最高</p>
+                </div>
+            </div>
+            
+            <div class="results-grid">
+                <!-- 结果卡片 1 -->
+                <div class="result-card">
+                    <div class="platform-logo">
+                        <span class="platform-name">美团外卖</span>
+                    </div>
+                    <div class="price">¥28.5</div>
+                    <div class="discount">新用户立减¥5</div>
+                    <div class="details">
+                        <p>配送费: ¥2.5</p>
+                        <p>预计用时: 35分钟</p>
+                        <p>高峰期可能延迟: 5-10分钟</p>
+                    </div>
+                    <div class="store-info">
+                        <div class="store-name">川味小厨</div>
+                        <div class="store-rating">
+                            ⭐⭐⭐⭐⭐
+                            <span class="rating-score">4.7/5</span>
+                        </div>
+                    </div>
+                    <button class="action-btn">去购买</button>
+                </div>
+                
+                <!-- 结果卡片 2 -->
+                <div class="result-card">
+                    <div class="platform-logo">
+                        <span class="platform-name">饿了么</span>
+                    </div>
+                    <div class="price">¥26.9 <span class="original-price">¥32.9</span></div>
+                    <div class="discount">满25减6</div>
+                    <div class="details">
+                        <p>配送费: <span class="free">¥3.0</span> (限时免费)</p>
+                        <p>预计用时: 30分钟</p>
+                        <p>高峰期可能延迟: 3-5分钟</p>
+                    </div>
+                    <div class="store-info">
+                        <div class="store-name">香辣坊</div>
+                        <div class="store-rating">
+                            ⭐⭐⭐⭐
+                            <span class="rating-score">4.5/5</span>
+                        </div>
+                    </div>
+                    <button class="action-btn">去购买</button>
+                </div>
+                
+                <!-- 结果卡片 3 -->
+                <div class="result-card">
+                    <div class="platform-logo">
+                        <span class="platform-name">淘宝外卖</span>
+                    </div>
+                    <div class="price">¥30.0</div>
+                    <div class="discount">红包抵扣¥3</div>
+                    <div class="details">
+                        <p>配送费: ¥2.0</p>
+                        <p>预计用时: 40分钟</p>
+                        <p>高峰期可能延迟: 10-15分钟</p>
+                    </div>
+                    <div class="store-info">
+                        <div class="store-name">蜀香园</div>
+                        <div class="store-rating">
+                            ⭐⭐⭐⭐⭐
+                            <span class="rating-score">4.8/5</span>
+                        </div>
+                    </div>
+                    <button class="action-btn">去购买</button>
+                </div>
+                
+                <!-- 结果卡片 4 - 增加另一家店铺 -->
+                <div class="result-card">
+                    <div class="platform-logo">
+                        <span class="platform-name">美团外卖</span>
+                    </div>
+                    <div class="price">¥29.9</div>
+                    <div class="discount">满30减3</div>
+                    <div class="details">
+                        <p>配送费: ¥2.5</p>
+                        <p>预计用时: 38分钟</p>
+                        <p>高峰期可能延迟: 5-8分钟</p>
+                    </div>
+                    <div class="store-info">
+                        <div class="store-name">老成都川菜馆</div>
+                        <div class="store-rating">
+                            ⭐⭐⭐⭐
+                            <span class="rating-score">4.6/5</span>
+                        </div>
+                    </div>
+                    <button class="action-btn">去购买</button>
+                </div>
+                
+                <!-- 结果卡片 5 - 增加另一家店铺 -->
+                <div class="result-card">
+                    <div class="platform-logo">
+                        <span class="platform-name">饿了么</span>
+                    </div>
+                    <div class="price">¥31.8 <span class="original-price">¥36.8</span></div>
+                    <div class="discount">会员9折</div>
+                    <div class="details">
+                        <p>配送费: ¥0.0 (会员免配送费)</p>
+                        <p>预计用时: 28分钟</p>
+                        <p>高峰期可能延迟: 2-4分钟</p>
+                    </div>
+                    <div class="store-info">
+                        <div class="store-name">川香阁</div>
+                        <div class="store-rating">
+                            ⭐⭐⭐⭐⭐
+                            <span class="rating-score">4.9/5</span>
+                        </div>
+                    </div>
+                    <button class="action-btn">去购买</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 热门排行榜 -->
+    <section class="trending-section">
+        <div class="container">
+            <h2 class="section-title highlight">热门比价排行</h2>
+            
+            <div class="trending-grid">
+                <div class="trending-item">
+                    <div class="rank">1</div>
+                    <div class="trending-info">
+                        <div class="trending-name">新奥尔良烤翅</div>
+                        <div class="trending-diff">最高差价: <span>¥7.5</span></div>
+                    </div>
+                    <div class="trending-action">
+                        <button class="action-btn small">查看</button>
+                    </div>
+                </div>
+                
+                <div class="trending-item">
+                    <div class="rank">2</div>
+                    <div class="trending-info">
+                        <div class="trending-name">宫保鸡丁</div>
+                        <div class="trending-diff">最高差价: <span>¥5.1</span></div>
+                    </div>
+                    <div class="trending-action">
+                        <button class="action-btn small">查看</button>
+                    </div>
+                </div>
+                
+                <div class="trending-item">
+                    <div class="rank">3</div>
+                    <div class="trending-info">
+                        <div class="trending-name">水煮鱼</div>
+                        <div class="trending-diff">最高差价: <span>¥8.8</span></div>
+                    </div>
+                    <div class="trending-action">
+                        <button class="action-btn small">查看</button>
+                    </div>
+                </div>
+                
+                <div class="trending-item">
+                    <div class="rank">4</div>
+                    <div class="trending-info">
+                        <div class="trending-name">红烧肉</div>
+                        <div class="trending-diff">最高差价: <span>¥6.3</span></div>
+                    </div>
+                    <div class="trending-action">
+                        <button class="action-btn small">查看</button>
+                    </div>
+                </div>
+                
+                <div class="trending-item">
+                    <div class="rank">5</div>
+                    <div class="trending-info">
+                        <div class="trending-name">糖醋排骨</div>
+                        <div class="trending-diff">最高差价: <span>¥4.9</span></div>
+                    </div>
+                    <div class="trending-action">
+                        <button class="action-btn small">查看</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 价格趋势 -->
+    <section class="price-trend-section">
+        <div class="container">
+            <h2 class="section-title">价格趋势分析</h2>
+            
+            <div class="trend-container">
+                <div class="trend-header">
+                    <div class="trend-title">宫保鸡丁 - 过去7天价格走势</div>
+                </div>
+                <!-- 使用Canvas元素绘制折线图 -->
+                <canvas id="priceChart" width="400" height="200"></canvas>
+                <div class="trend-summary">
+                    <p>根据过去7天数据分析，<strong>饿了么</strong>平台的价格波动较小，<strong>美团</strong>平台在周末价格偏高，建议在工作日通过<strong>饿了么</strong>下单可获得更稳定的低价。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 优惠券领取 -->
+    <section class="coupons-section">
+        <div class="container">
+            <h2 class="section-title highlight">优惠券领取</h2>
+            
+            <div class="coupons-grid">
+                <div class="coupon-card">
+                    <div class="coupon-platform">美团外卖</div>
+                    <div class="coupon-value">满30减10</div>
+                    <div class="coupon-expiry">有效期至: 2023-11-30</div>
+                    <button class="action-btn">立即领取</button>
+                </div>
+                
+                <div class="coupon-card">
+                    <div class="coupon-platform">饿了么</div>
+                    <div class="coupon-value">新用户立减15</div>
+                    <div class="coupon-expiry">有效期至: 2023-11-15</div>
+                    <button class="action-btn">立即领取</button>
+                </div>
+                
+                <div class="coupon-card">
+                    <div class="coupon-platform">淘宝外卖</div>
+                    <div class="coupon-value">满50减12</div>
+                    <div class="coupon-expiry">有效期至: 2023-11-20</div>
+                    <button class="action-btn">立即领取</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 省钱攻略 -->
+    <section class="tips-section">
+        <div class="container">
+            <h2 class="section-title">省钱攻略</h2>
+            
+            <div class="tips-grid">
+                <div class="tip-card">
+                    <div class="tip-icon">💰</div>
+                    <div class="tip-title">最佳下单时间</div>
+                    <div class="tip-content">工作日11:00前、17:00前下单通常有早鸟优惠，可节省5-10元。</div>
+                </div>
+                
+                <div class="tip-card">
+                    <div class="tip-icon">🎯</div>
+                    <div class="tip-title">会员特权</div>
+                    <div class="tip-content">开通各平台会员可享受免配送费、额外折扣等权益，长期点餐更划算。</div>
+                </div>
+                
+                <div class="tip-card">
+                    <div class="tip-icon">📱</div>
+                    <div class="tip-title">新用户优惠</div>
+                    <div class="tip-content">使用新手机号注册可享受首单立减15-20元的优惠，别忘了和朋友共享。</div>
+                </div>
+                
+                <div class="tip-card">
+                    <div class="tip-icon">🔄</div>
+                    <div class="tip-title">平台轮换</div>
+                    <div class="tip-content">每周不同平台有不同主题活动，轮流使用可最大化优惠。</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 评价区域 -->
+    <section class="reviews-section">
+        <div class="container">
+            <h2 class="section-title">用户评价</h2>
+            
+            <div class="weighted-score">
+                <span>综合加权评分:</span>
+                <span class="score" id="overall-score">4.7</span>
+                <span>(基于 <span id="review-count">3</span> 条VIP评价)</span>
+            </div>
+            
+            <div id="review-content">
+                <!-- 评价内容将根据VIP状态动态显示 -->
+                <div class="review-lock">
+                    <div class="lock-icon">🔒</div>
+                    <div class="lock-message">解锁真实客观的VIP会员评价</div>
+                    <p>会员评价经过VIP等级加权计算，更具参考价值</p>
+                    <button class="btn-vip" id="unlock-vip-button">开通VIP会员</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 评价系统已更新为基于用户活跃度的设计 -->
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>关于我们</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">公司简介</a></li>
+                        <li><a href="#">团队介绍</a></li>
+                        <li><a href="#">联系我们</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>帮助中心</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">使用指南</a></li>
+                        <li><a href="#">常见问题</a></li>
+                        <li><a href="#">用户协议</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>合作伙伴</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">美团</a></li>
+                        <li><a href="#">饿了么</a></li>
+                        <li><a href="#">淘宝</a></li>
+                        <li><a href="#">京东</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>关注我们</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">微信公众号</a></li>
+                        <li><a href="#">微博</a></li>
+                        <li><a href="#">抖音</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                &copy; 2023 生活比价助手 版权所有
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 增强的交互功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 用户活跃度评价系统
+            
+            // 基于用户活跃度的权重计算函数
+            function getUserActivityWeight(activityLevel) {
+                if (activityLevel === 1) return 0.9;  // 新用户
+                if (activityLevel === 2) return 1.0;  // 普通用户
+                if (activityLevel >= 3 && activityLevel <= 5) return 1.1;  // 活跃用户
+                if (activityLevel >= 6 && activityLevel <= 7) return 1.2;  // 资深用户
+                if (activityLevel >= 8) return 1.3;  // 核心用户
+                return 1.0;
+            }
+            
+            // 评价系统相关元素
+            const reviewContent = document.getElementById('review-content');
+            const overallScore = document.getElementById('overall-score');
+            const reviewCount = document.getElementById('review-count');
+            const communityButton = document.getElementById('vip-button'); // 复用原按钮
+            
+            // 初始化社区按钮
+            if (communityButton) {
+                communityButton.textContent = '社区';
+                communityButton.classList.remove('outlined');
+                communityButton.style.background = 'transparent';
+                communityButton.style.color = 'var(--text-color)';
+                communityButton.style.borderColor = 'var(--border-color)';
+            }
+            
+            // 生成用户评价数据
+            function generateReviews() {
+                return [
+                    {
+                        name: '张**',
+                        activityLevel: 3,
+                        date: '2023-10-15',
+                        rating: 5,
+                        content: '用这个软件比较了同一家餐厅在不同平台的价格，发现美团比饿了么便宜了5元，还送饮料，真的很实用！感谢活跃用户的真实反馈。',
+                        isVerified: true
+                    },
+                    {
+                        name: '李**',
+                        activityLevel: 2,
+                        date: '2023-10-12',
+                        rating: 4,
+                        content: '界面简洁，操作方便，帮我省了不少钱。希望未来能加入更多平台的比价功能。',
+                        isVerified: true
+                    },
+                    {
+                        name: '王**',
+                        activityLevel: 1,
+                        date: '2023-10-08',
+                        rating: 5,
+                        content: '点外卖前必用这个软件比较一下，已经推荐给朋友们了。特别喜欢简约风格的设计，看起来很舒服。',
+                        isVerified: false
+                    },
+                    {
+                        name: '赵**',
+                        activityLevel: 6,
+                        date: '2023-10-05',
+                        rating: 4,
+                        content: '作为资深用户，我觉得这个平台的评价系统非常合理。低价不一定最好，真实体验更重要。建议增加更多的数据维度分析。',
+                        isVerified: true
+                    },
+                    {
+                        name: '陈**',
+                        activityLevel: 4,
+                        date: '2023-10-01',
+                        rating: 5,
+                        content: '使用体验很好，评价质量也很高。通过活跃度系统可以看到更真实的用户反馈，推荐给大家！',
+                        isVerified: true
+                    }
+                ];
+            }
+            
+            // 计算加权评分
+            function calculateWeightedScore(reviews) {
+                let totalWeightedScore = 0;
+                let totalWeight = 0;
+                
+                reviews.forEach(review => {
+                    const weight = getUserActivityWeight(review.activityLevel);
+                    totalWeightedScore += review.rating * weight;
+                    totalWeight += weight;
+                });
+                
+                return totalWeight > 0 ? (totalWeightedScore / totalWeight).toFixed(1) : '0.0';
+            }
+            
+            // 加载评价
+            function loadReviews() {
+                const reviews = generateReviews();
+                const score = calculateWeightedScore(reviews);
+                
+                // 更新评分显示
+                overallScore.textContent = score;
+                reviewCount.textContent = reviews.length;
+                
+                // 生成评价HTML
+                let reviewsHtml = '';
+                reviews.forEach(review => {
+                    const weight = getUserActivityWeight(review.activityLevel);
+                    const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+                    
+                    // 根据活跃度等级显示不同标识
+                    let userBadge = '';
+                    let badgeClass = '';
+                    let badgeText = '普通用户';
+                    
+                    if (review.activityLevel >= 8) {
+                        badgeClass = 'core-user';
+                        badgeText = '核心用户';
+                    } else if (review.activityLevel >= 6) {
+                        badgeClass = 'senior-user';
+                        badgeText = '资深用户';
+                    } else if (review.activityLevel >= 3) {
+                        badgeClass = 'active-user';
+                        badgeText = '活跃用户';
+                    } else if (review.activityLevel === 1) {
+                        badgeClass = 'new-user';
+                        badgeText = '新用户';
+                    }
+                    
+                    reviewsHtml += `
+                        <div class="review-card">
+                            <div class="review-header">
+                                <div class="reviewer-info">
+                                    <span class="reviewer">${review.name}</span>
+                                    ${badgeClass ? `<span class="user-badge ${badgeClass}">${badgeText}</span>` : ''}
+                                    ${review.isVerified ? '<span style="color: #00bb00; font-size: 12px;">✓</span>' : ''}
+                                </div>
+                                <span class="review-date">${review.date}</span>
+                            </div>
+                            <div class="review-rating">
+                                ${stars}
+                                <span style="color: var(--text-color); margin-left: 5px;">${review.rating}.0</span>
+                            </div>
+                            <div class="review-content">${review.content}</div>
+                            ${weight > 1 ? `<div class="weight-indicator">
+                                经验权重:
+                                <span class="weight">${weight.toFixed(1)}</span>
+                                <span style="color: var(--highlight-color);">活跃度加权</span>
+                            </div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                // 添加评价功能按钮
+                reviewsHtml += `
+                    <div style="text-align: center; margin-top: 30px;">
+                        <button class="btn-outline" style="padding: 10px 30px;">
+                            发表评价
+                        </button>
+                    </div>
+                `;
+                
+                reviewContent.innerHTML = reviewsHtml;
+                
+                // 绑定发表评价按钮事件
+                const reviewBtn = reviewContent.querySelector('.btn-outline');
+                if (reviewBtn) {
+                    reviewBtn.addEventListener('click', function() {
+                        alert('评价功能即将上线，敬请期待！');
+                    });
+                }
+            }
+            
+            // 初始化加载评价
+            loadReviews();
+            
+            // 延迟绑定事件，确保DOM完全加载
+            setTimeout(() => {
+                // 事件绑定 - 社区按钮
+                if (communityButton) {
+                    communityButton.addEventListener('click', function() {
+                        alert('社区功能即将上线，敬请期待！');
+                    });
+                }
+            }, 100);
+            // 平台选择
+            const platforms = document.querySelectorAll('.platform');
+            platforms.forEach(platform => {
+                platform.addEventListener('click', function() {
+                    platforms.forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 添加简单的动画效果
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 150);
+                });
+            });
+            
+            // 搜索功能
+            const searchBtn = document.getElementById('search-btn');
+            const searchInput = document.getElementById('search-input');
+            
+            // 获取当前时间的函数
+            function getCurrentTimeSlot() {
+                const now = new Date();
+                const hour = now.getHours();
+                const minute = now.getMinutes();
+                
+                if (hour < 10) return '早餐时段';
+                else if (hour < 14) {
+                    if (hour === 11 && minute >= 30) return '午餐高峰';
+                    return '午餐时段';
+                } else if (hour < 17) return '下午茶时段';
+                else if (hour < 20) {
+                    if (hour === 18 && minute >= 30) return '晚餐高峰';
+                    return '晚餐时段';
+                } else return '夜宵时段';
+            }
+            
+            // 生成AI分析内容的函数
+            function generateAiAnalysis(query, timeSlot) {
+                const basePrices = {
+                    '宫保鸡丁': 32.9,
+                    '新奥尔良烤翅': 28.5,
+                    '水煮鱼': 45.0,
+                    '红烧肉': 39.0,
+                    '糖醋排骨': 36.0
+                };
+                
+                const defaultPrice = 30.0;
+                const originalPrice = basePrices[query] || defaultPrice;
+                const discount = Math.floor(Math.random() * 5) + 3;
+                const deliveryFee = 3.0;
+                const finalPrice = originalPrice - discount;
+                
+                // 根据时间段生成不同的配送时间分析
+                let deliveryTimes = {};
+                let delayInfo = '';
+                
+                switch(timeSlot) {
+                    case '午餐高峰':
+                    case '晚餐高峰':
+                        deliveryTimes = {
+                            current: '30-35分钟',
+                            nextSlot1: '20-25分钟',
+                            nextSlot2: '15-20分钟'
+                        };
+                        delayInfo = '当前为用餐高峰期，配送可能延迟5-10分钟';
+                        break;
+                    case '午餐时段':
+                    case '晚餐时段':
+                        deliveryTimes = {
+                            current: '25-30分钟',
+                            nextSlot1: '20-25分钟',
+                            nextSlot2: '15-20分钟'
+                        };
+                        delayInfo = '当前为用餐时段，配送可能轻微延迟';
+                        break;
+                    default:
+                        deliveryTimes = {
+                            current: '20-25分钟',
+                            nextSlot1: '15-20分钟',
+                            nextSlot2: '15分钟左右'
+                        };
+                        delayInfo = '当前为非高峰时段，配送时间较为稳定';
+                }
+                
+                return {
+                    price: {
+                        original: originalPrice,
+                        discount: discount,
+                        deliveryFee: deliveryFee,
+                        final: finalPrice
+                    },
+                    delivery: deliveryTimes,
+                    summary: [
+                        '根据当前分析，建议：',
+                        `1. 饿了么平台价格最优，且有免配送费活动`,
+                        delayInfo,
+                        `3. 如非急需，建议避开高峰期下单，可节省约10分钟配送时间`,
+                        `4. 综合考虑价格和时间，饿了么当前性价比最高`
+                    ]
+                };
+            }
+            
+            // 更新AI分析区域的函数
+            function updateAiAnalysis(query) {
+                const timeSlot = getCurrentTimeSlot();
+                const analysis = generateAiAnalysis(query, timeSlot);
+                
+                // 找到AI分析区域
+                const aiAnalysis = document.querySelector('.ai-analysis');
+                if (!aiAnalysis) return;
+                
+                // 更新价格明细
+                const priceItems = aiAnalysis.querySelectorAll('.price-item');
+                if (priceItems.length >= 4) {
+                    priceItems[0].querySelector('span:last-child').textContent = `¥${analysis.price.original.toFixed(1)}`;
+                    priceItems[1].querySelector('span:last-child').textContent = `-¥${analysis.price.discount.toFixed(1)}`;
+                    priceItems[3].querySelector('span:last-child').textContent = `¥${analysis.price.final.toFixed(1)}`;
+                }
+                
+                // 更新配送时间分析
+                const timeSlots = aiAnalysis.querySelectorAll('.time-slot');
+                if (timeSlots.length >= 3) {
+                    const now = new Date();
+                    const currentHour = now.getHours();
+                    const currentMinute = now.getMinutes();
+                    const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+                    
+                    timeSlots[0].querySelector('span:first-child').textContent = `当前下单 (${currentTime})`;
+                    timeSlots[0].querySelector('span:last-child').textContent = analysis.delivery.current;
+                    
+                    // 根据高峰时段添加忙碌标记
+                    if (timeSlot === '午餐高峰' || timeSlot === '晚餐高峰') {
+                        timeSlots[0].querySelector('span:last-child').classList.add('busy');
+                    } else {
+                        timeSlots[0].querySelector('span:last-child').classList.remove('busy');
+                    }
+                }
+                
+                // 更新AI总结
+                const aiSummary = aiAnalysis.querySelector('.ai-summary');
+                if (aiSummary) {
+                    let summaryHtml = '';
+                    analysis.summary.forEach(line => {
+                        summaryHtml += `<p>${line}</p>`;
+                    });
+                    aiSummary.innerHTML = summaryHtml;
+                }
+            }
+            
+            searchBtn.addEventListener('click', function() {
+                const query = searchInput.value.trim();
+                if (query) {
+                    // 在实际应用中，这里会调用后端API获取比价数据
+                    // 这里我们只是简单模拟
+                    const sectionTitles = document.querySelectorAll('.section-title');
+                    sectionTitles.forEach(title => {
+                        if (title.textContent.includes('比价结果：')) {
+                            title.textContent = `比价结果：${query}`;
+                        }
+                    });
+                    
+                    // 更新价格趋势图标题
+                    const trendTitle = document.querySelector('.trend-title');
+                    trendTitle.textContent = `${query} - 过去7天价格走势`;
+                    
+                    // 更新折线图数据
+                    if (window.priceChart) {
+                        window.priceChart.data.datasets.forEach(dataset => {
+                            // 模拟不同平台的价格数据
+                            dataset.data = generateRandomPrices();
+                        });
+                        window.priceChart.update();
+                    }
+                    
+                    // 显示加载状态
+                    const resultsSection = document.querySelector('.results-section .container');
+                    const aiAnalysis = document.querySelector('.ai-analysis');
+                    const resultsGrid = document.querySelector('.results-grid');
+                    
+                    // 保存原始内容
+                    const originalGridContent = resultsGrid.innerHTML;
+                    
+                    // 显示加载状态
+                    resultsGrid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px;">🤖 AI正在分析中，请稍候...</div>';
+                    if (aiAnalysis) {
+                        aiAnalysis.innerHTML = '<div style="text-align:center; padding:40px;">🔍 正在计算最优方案...</div>';
+                    }
+                    
+                    // 模拟搜索延迟
+                    setTimeout(() => {
+                        // 恢复原始网格内容
+                        resultsGrid.innerHTML = originalGridContent;
+                        
+                        // 更新AI分析内容
+                        updateAiAnalysis(query);
+                        
+                        // 高亮显示最低价
+                        highlightLowestPrice();
+                    }, 1500);
+                } else {
+                    alert('请输入搜索内容');
+                }
+            });
+            
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchBtn.click();
+                }
+            });
+            
+            // 模拟登录/注册功能
+            const loginBtns = document.querySelectorAll('.btn:not(.btn-vip)');
+            loginBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const isLogin = this.textContent === '登录';
+                    alert(isLogin ? '登录功能即将上线' : '注册功能即将上线');
+                });
+            });
+            
+            // 热门排行榜点击事件
+            const trendingButtons = document.querySelectorAll('.trending-action .action-btn');
+            trendingButtons.forEach((button, index) => {
+                button.addEventListener('click', function() {
+                    const trendingItems = document.querySelectorAll('.trending-name');
+                    const foodName = trendingItems[index].textContent;
+                    searchInput.value = foodName;
+                    searchBtn.click();
+                });
+            });
+            
+            // 优惠券领取事件
+            const couponButtons = document.querySelectorAll('.coupons-section .action-btn');
+            couponButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    this.textContent = '已领取';
+                    this.style.backgroundColor = 'var(--primary-color)';
+                    this.style.color = 'white';
+                    this.style.borderColor = 'var(--primary-color)';
+                    this.disabled = true;
+                    alert('优惠券领取成功！');
+                });
+            });
+            
+            // 去购买按钮事件
+            const buyButtons = document.querySelectorAll('.results-grid .action-btn');
+            buyButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const platformName = this.closest('.result-card').querySelector('.platform-name').textContent;
+                    const price = this.closest('.result-card').querySelector('.price').textContent;
+                    alert(`即将跳转到${platformName}，价格：${price}`);
+                });
+            });
+            
+            // 高亮显示最低价
+            function highlightLowestPrice() {
+                const priceElements = document.querySelectorAll('.result-card .price');
+                let lowestPrice = Infinity;
+                let lowestPriceElement = null;
+                
+                priceElements.forEach(element => {
+                    // 提取价格数字
+                    const priceText = element.textContent.replace(/[^\d.]/g, '');
+                    const price = parseFloat(priceText);
+                    
+                    if (!isNaN(price) && price < lowestPrice) {
+                        lowestPrice = price;
+                        lowestPriceElement = element.closest('.result-card');
+                    }
+                });
+                
+                // 高亮显示最低价卡片
+                if (lowestPriceElement) {
+                    // 添加最佳选择标签
+                    const tag = document.createElement('div');
+                    tag.className = 'best-choice-tag';
+                    tag.textContent = '最佳选择';
+                    tag.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        right: 0;
+                        background: var(--highlight-color);
+                        color: white;
+                        padding: 5px 10px;
+                        font-size: 12px;
+                        font-weight: 500;
+                    `;
+                    
+                    // 确保result-card有相对定位
+                    lowestPriceElement.style.position = 'relative';
+                    
+                    // 移除已存在的标签
+                    const existingTag = lowestPriceElement.querySelector('.best-choice-tag');
+                    if (existingTag) {
+                        existingTag.remove();
+                    }
+                    
+                    lowestPriceElement.appendChild(tag);
+                    
+                    // 添加动画效果
+                    lowestPriceElement.style.animation = 'pulse 2s infinite';
+                }
+            }
+            
+            // 初始化高亮
+            highlightLowestPrice();
+            
+            // 生成随机价格数据用于图表
+            function generateRandomPrices() {
+                return Array(7).fill().map(() => Math.floor(Math.random() * 10) + 20);
+            }
+            
+            // 初始化价格趋势折线图
+            if (typeof Chart !== 'undefined') {
+                const ctx = document.getElementById('priceChart').getContext('2d');
+                
+                window.priceChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['10/10', '10/11', '10/12', '10/13', '10/14', '10/15', '10/16'],
+                        datasets: [
+                            {
+                                label: '美团',
+                                data: generateRandomPrices(),
+                                borderColor: '#00bb00',
+                                backgroundColor: 'rgba(0, 187, 0, 0.1)',
+                                tension: 0.1,
+                                fill: true
+                            },
+                            {
+                                label: '饿了么',
+                                data: generateRandomPrices(),
+                                borderColor: '#ff6700',
+                                backgroundColor: 'rgba(255, 103, 0, 0.1)',
+                                tension: 0.1,
+                                fill: true
+                            },
+                            {
+                                label: '淘宝外卖',
+                                data: generateRandomPrices(),
+                                borderColor: '#ff4400',
+                                backgroundColor: 'rgba(255, 68, 0, 0.1)',
+                                tension: 0.1,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: '价格 (¥)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '日期'
+                                }
+                            }
+                        },
+                        animation: {
+                            duration: 1500,
+                            easing: 'easeOutQuart'
+                        }
+                    }
+                });
+            }
+            
+            // 添加简单的脉冲动画
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes pulse {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.02); }
+                    100% { transform: scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+        </div>
+    </div>
+
+    <!-- 二级页面：商品详情 -->
+    <div class="secondary-page" id="productDetailPage">
+        <div class="container">
+            <h2 id="detailProductName">商品详情</h2>
+            <div class="detail-content" id="detailContent">
+                <div class="loading"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 二级页面：排行榜详情 -->
+    <div class="secondary-page" id="rankingDetailPage">
+        <div class="container">
+            <h2 id="rankingTitle">排行榜详情</h2>
+            <div class="ranking-detail-content" id="rankingDetailContent">
+                <div class="loading"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 二级页面：优惠券详情 -->
+    <div class="secondary-page" id="couponDetailPage">
+        <div class="container">
+            <h2>优惠券详情</h2>
+            <div class="coupon-detail-content" id="couponDetailContent">
+                <div class="loading"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框：店铺信息 -->
+    <div class="modal-overlay" id="storeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="storeModalTitle">店铺信息</h3>
+                <button class="close-modal" onclick="closeModal('storeModal')">×</button>
+            </div>
+            <div class="modal-body" id="storeModalBody">
+                <div class="loading"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框：收藏/对比 -->
+    <div class="modal-overlay" id="saveCompareModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">操作成功</h3>
+                <button class="close-modal" onclick="closeModal('saveCompareModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="saveCompareMessage">已成功添加到收藏夹</p>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn" onclick="closeModal('saveCompareModal')">继续购物</button>
+                    <button class="btn btn-primary" onclick="viewFavorites()">查看收藏</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 交互功能实现
+        
+        // 打开模态框
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        // 关闭模态框
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // 打开二级页面
+        function openSecondaryPage(pageId) {
+            const page = document.getElementById(pageId);
+            const backButton = document.getElementById('backButton');
+            
+            if (page && backButton) {
+                page.classList.add('active');
+                backButton.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        // 关闭二级页面
+        function closeSecondaryPage() {
+            const pages = document.querySelectorAll('.secondary-page.active');
+            const backButton = document.getElementById('backButton');
+            
+            pages.forEach(page => page.classList.remove('active'));
+            backButton.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // 查看收藏
+        function viewFavorites() {
+            alert('跳转到收藏页面');
+            closeModal('saveCompareModal');
+        }
+
+        // 返回按钮点击事件
+        document.getElementById('backButton').addEventListener('click', closeSecondaryPage);
+
+        // 为搜索按钮添加事件
+        document.querySelector('.search-button').addEventListener('click', function() {
+            const keyword = document.querySelector('.search-input').value.trim();
+            if (keyword) {
+                // 模拟搜索加载
+                const resultsSection = document.querySelector('.results-section');
+                if (resultsSection) {
+                    resultsSection.innerHTML = '<div class="loading"></div>';
+                    
+                    // 模拟搜索延迟
+                    setTimeout(() => {
+                        // 恢复原始内容或显示搜索结果
+                        alert(`搜索关键词: ${keyword}\n即将显示搜索结果`);
+                        // 在实际应用中，这里会重新加载或更新搜索结果
+                    }, 1000);
+                }
+            }
+        });
+
+        // 为所有结果卡片添加点击事件
+        document.querySelectorAll('.result-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // 如果点击的是按钮，不触发卡片点击事件
+                if (e.target.closest('button')) {
+                    return;
+                }
+                
+                const productName = this.querySelector('.platform-name').textContent;
+                openProductDetail(productName);
+            });
+        });
+
+        // 打开商品详情
+        function openProductDetail(productName) {
+            const detailPage = document.getElementById('productDetailPage');
+            const detailProductName = document.getElementById('detailProductName');
+            const detailContent = document.getElementById('detailContent');
+            
+            if (detailPage && detailProductName && detailContent) {
+                detailProductName.textContent = `${productName} - 商品详情`;
+                detailContent.innerHTML = '<div class="loading"></div>';
+                
+                // 模拟加载详情
+                setTimeout(() => {
+                    detailContent.innerHTML = `
+                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
+                            <div>
+                                <img src="https://via.placeholder.com/400x300" alt="商品图片" style="width: 100%; border-radius: 8px;">
+                            </div>
+                            <div>
+                                <h3 style="margin-bottom: 20px;">${productName} 详细信息</h3>
+                                <p style="margin-bottom: 15px;">价格：¥<span style="color: var(--highlight-color); font-size: 24px; font-weight: 600;">28.90</span></p>
+                                <p style="margin-bottom: 15px;">月销量：2345 份</p>
+                                <p style="margin-bottom: 15px;">用户评分：4.8 分 (321条评价)</p>
+                                <p style="margin-bottom: 20px;">配送方式：外卖配送 / 自提</p>
+                                <div style="margin-bottom: 20px;">
+                                    <h4>菜品详情：</h4>
+                                    <p>精选优质食材，口感鲜美，色香味俱全。</p>
+                                </div>
+                                <div style="margin-bottom: 20px;">
+                                    <h4>店铺信息：</h4>
+                                    <p>店铺名称：示例餐厅</p>
+                                    <p>营业时间：10:00 - 22:00</p>
+                                    <p>联系电话：400-123-4567</p>
+                                </div>
+                                <button class="btn btn-primary" style="margin-right: 10px;">去购买</button>
+                                <button class="btn">收藏</button>
+                            </div>
+                        </div>
+                        <div style="margin-top: 40px;">
+                            <h3 style="margin-bottom: 20px;">用户评价</h3>
+                            <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
+                                <div style="margin-bottom: 20px;">
+                                    <p><strong>用户A：</strong>非常好吃，送餐也很快！</p>
+                                    <p style="color: var(--light-text); font-size: 14px;">2024-01-15</p>
+                                </div>
+                                <div style="margin-bottom: 20px;">
+                                    <p><strong>用户B：</strong>味道不错，但分量有点少。</p>
+                                    <p style="color: var(--light-text); font-size: 14px;">2024-01-14</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }, 1000);
+                
+                openSecondaryPage('productDetailPage');
+            }
+        }
+
+        // 为排行榜项添加点击事件
+        document.querySelectorAll('.trending-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const foodName = this.querySelector('.trending-info h3').textContent;
+                openRankingDetail(foodName);
+            });
+        });
+
+        // 打开排行榜详情
+        function openRankingDetail(foodName) {
+            const rankingPage = document.getElementById('rankingDetailPage');
+            const rankingTitle = document.getElementById('rankingTitle');
+            const rankingDetailContent = document.getElementById('rankingDetailContent');
+            
+            if (rankingPage && rankingTitle && rankingDetailContent) {
+                rankingTitle.textContent = `${foodName} - 比价排行榜`;
+                rankingDetailContent.innerHTML = '<div class="loading"></div>';
+                
+                // 模拟加载排行榜详情
+                setTimeout(() => {
+                    rankingDetailContent.innerHTML = `
+                        <h3 style="margin-bottom: 20px;">${foodName} 在各平台的价格对比</h3>
+                        <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 40px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px;">
+                                <div>
+                                    <h4>美团外卖</h4>
+                                    <p style="color: var(--light-text);">配送费：¥3.00 | 预计送达：30分钟</p>
+                                </div>
+                                <span style="color: var(--highlight-color); font-size: 20px; font-weight: 600;">¥28.90</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px;">
+                                <div>
+                                    <h4>饿了么</h4>
+                                    <p style="color: var(--light-text);">配送费：¥2.50 | 预计送达：35分钟</p>
+                                </div>
+                                <span style="color: var(--highlight-color); font-size: 20px; font-weight: 600;">¥30.50</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px;">
+                                <div>
+                                    <h4>淘宝外卖</h4>
+                                    <p style="color: var(--light-text);">配送费：¥4.00 | 预计送达：25分钟</p>
+                                </div>
+                                <span style="color: var(--highlight-color); font-size: 20px; font-weight: 600;">¥27.90</span>
+                            </div>
+                        </div>
+                        
+                        <h3 style="margin-bottom: 20px;">历史价格走势</h3>
+                        <div style="height: 300px; margin-bottom: 40px;">
+                            <canvas id="historyChart"></canvas>
+                        </div>
+                        
+                        <h3 style="margin-bottom: 20px;">用户推荐</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+                            <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
+                                <h4>最佳购买时机</h4>
+                                <p>根据历史数据，每周二和周四价格最低，平均比周末低10%。</p>
+                            </div>
+                            <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
+                                <h4>优惠活动</h4>
+                                <p>美团外卖每天11:00-13:00有满减活动，最高立减15元。</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 初始化历史价格走势图
+                    initHistoryChart();
+                }, 1000);
+                
+                openSecondaryPage('rankingDetailPage');
+            }
+        }
+
+        // 初始化历史价格走势图
+        function initHistoryChart() {
+            const ctx = document.getElementById('historyChart');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                        datasets: [
+                            {
+                                label: '美团外卖',
+                                data: [28.9, 30.5, 29.9, 28.9, 31.5, 28.9],
+                                borderColor: '#FF6700',
+                                backgroundColor: 'rgba(255, 103, 0, 0.1)',
+                                tension: 0.3
+                            },
+                            {
+                                label: '饿了么',
+                                data: [30.5, 32.0, 31.5, 30.5, 33.0, 30.5],
+                                borderColor: '#19C37D',
+                                backgroundColor: 'rgba(25, 195, 125, 0.1)',
+                                tension: 0.3
+                            },
+                            {
+                                label: '淘宝外卖',
+                                data: [27.9, 29.5, 28.9, 27.9, 30.5, 27.9],
+                                borderColor: '#FF4757',
+                                backgroundColor: 'rgba(255, 71, 87, 0.1)',
+                                tension: 0.3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 为"去购买"按钮添加点击事件
+        document.querySelectorAll('.btn-buy').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation(); // 阻止事件冒泡
+                const productName = this.closest('.result-card').querySelector('.platform-name').textContent;
+                alert(`即将跳转到${productName}的购买页面`);
+            });
+        });
+
+        // 为店铺信息添加点击事件
+        document.querySelectorAll('.store-info').forEach(store => {
+            store.addEventListener('click', function() {
+                const storeName = this.querySelector('.store-name').textContent;
+                openStoreModal(storeName);
+            });
+        });
+
+        // 打开店铺信息模态框
+        function openStoreModal(storeName) {
+            const modalTitle = document.getElementById('storeModalTitle');
+            const modalBody = document.getElementById('storeModalBody');
+            
+            if (modalTitle && modalBody) {
+                modalTitle.textContent = storeName;
+                modalBody.innerHTML = '<div class="loading"></div>';
+                
+                // 模拟加载店铺信息
+                setTimeout(() => {
+                    modalBody.innerHTML = `
+                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
+                            <img src="https://via.placeholder.com/200x200" alt="店铺图片" style="width: 100%; border-radius: 8px;">
+                            <div>
+                                <p><strong>评分：</strong>4.8分</p>
+                                <p><strong>月销量：</strong>5000+</p>
+                                <p><strong>营业时间：</strong>10:00 - 22:00</p>
+                                <p><strong>地址：</strong>北京市朝阳区示例路123号</p>
+                                <p><strong>电话：</strong>010-12345678</p>
+                                <p><strong>特色菜品：</strong>川菜、家常菜</p>
+                                <p><strong>优惠活动：</strong>满30减10，满50减15</p>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <h4 style="margin-bottom: 15px;">商家公告</h4>
+                            <p>欢迎光临本店，我们提供优质的菜品和服务，感谢您的支持！</p>
+                        </div>
+                    `;
+                }, 1000);
+                
+                openModal('storeModal');
+            }
+        }
+
+        // 为收藏和对比按钮添加事件
+        document.querySelectorAll('.btn:not(.btn-buy)').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation(); // 阻止事件冒泡
+                const message = document.getElementById('saveCompareMessage');
+                
+                if (message) {
+                    if (this.textContent.includes('收藏')) {
+                        message.textContent = '已成功添加到收藏夹';
+                    } else if (this.textContent.includes('对比')) {
+                        message.textContent = '已添加到对比列表';
+                    }
+                    
+                    openModal('saveCompareModal');
+                }
+            });
+        });
+
+        // 为优惠券添加点击事件
+        document.querySelectorAll('.coupon').forEach(coupon => {
+            coupon.addEventListener('click', function() {
+                openSecondaryPage('couponDetailPage');
+                const couponDetailContent = document.getElementById('couponDetailContent');
+                
+                if (couponDetailContent) {
+                    couponDetailContent.innerHTML = '<div class="loading"></div>';
+                    
+                    // 模拟加载优惠券详情
+                    setTimeout(() => {
+                        couponDetailContent.innerHTML = `
+                            <div style="border: 1px dashed var(--border-color); padding: 30px; border-radius: 8px; margin-bottom: 30px;">
+                                <h3 style="color: var(--highlight-color); margin-bottom: 20px;">满30减10优惠券</h3>
+                                <p style="margin-bottom: 15px;"><strong>使用范围：</strong>全平台通用</p>
+                                <p style="margin-bottom: 15px;"><strong>有效期：</strong>2024-01-01 至 2024-01-31</p>
+                                <p style="margin-bottom: 15px;"><strong>使用条件：</strong>订单满30元可使用</p>
+                                <p style="margin-bottom: 20px;"><strong>使用限制：</strong>每笔订单限用1张</p>
+                                <button class="btn btn-primary" style="width: 100%;">立即领取</button>
+                            </div>
+                            
+                            <h3 style="margin-bottom: 20px;">优惠券使用说明</h3>
+                            <ul style="list-style: none; padding: 0;">
+                                <li style="margin-bottom: 10px;">1. 领取后自动放入您的优惠券账户</li>
+                                <li style="margin-bottom: 10px;">2. 下单时可在结算页面选择使用</li>
+                                <li style="margin-bottom: 10px;">3. 优惠券不可兑换现金，过期作废</li>
+                                <li style="margin-bottom: 10px;">4. 如有疑问，请联系客服：400-123-4567</li>
+                            </ul>
+                        `;
+                    }, 1000);
+                }
+            });
+        });
+
+        // 为导航链接添加点击事件
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const section = this.textContent;
+                alert(`跳转到${section}页面`);
+            });
+        });
+
+        // 为用户操作按钮添加点击事件
+        document.querySelectorAll('.user-actions button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                alert(`${this.textContent}功能点击`);
+            });
+        });
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为结果卡片添加悬停效果
+            const resultCards = document.querySelectorAll('.result-card');
+            resultCards.forEach(card => {
+                card.style.cursor = 'pointer';
+                card.style.transition = 'var(--transition)';
+                
+                card.addEventListener('mouseenter', function() {
+                    this.style.boxShadow = 'var(--shadow)';
+                    this.style.transform = 'translateY(-2px)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.boxShadow = 'none';
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
